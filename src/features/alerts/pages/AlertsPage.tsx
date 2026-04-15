@@ -9,43 +9,30 @@ const StatCard: React.FC<{
   label: string;
   value: string;
   badge: string;
-  badgeColor: string;
+  badgeColorClass: string;
   borderColor: string;
-  glow?: boolean;
-}> = ({ label, value, badge, badgeColor, borderColor, glow }) => (
-  <div
-    className={`bg-surface-dark border ${borderColor} rounded-lg p-3 flex items-center justify-between relative overflow-hidden`}
-  >
-    {glow && (
-      <div
-        className={`absolute inset-0 bg-gradient-to-r from-${badgeColor}-500/5 to-transparent pointer-events-none`}
-      ></div>
-    )}
+  textColorClass?: string;
+}> = ({ label, value, badge, badgeColorClass, borderColor, textColorClass }) => (
+  <div className={`bg-surface-dark border ${borderColor} rounded-lg p-3 flex items-center justify-between relative overflow-hidden`}>
     <div className="relative z-10">
-      <p className={`text-${badgeColor === 'danger' ? 'red' : 'slate'}-400 text-xs uppercase font-medium`}>
-        {label}
-      </p>
+      <p className={`text-xs uppercase font-medium ${textColorClass ?? 'text-slate-400'}`}>{label}</p>
       <p className="text-white text-xl font-bold">{value}</p>
     </div>
-    <span className={`text-${badgeColor}-500 bg-${badgeColor}-500/10 text-xs font-medium px-2 py-1 rounded`}>
-      {badge}
-    </span>
+    <span className={`text-xs font-medium px-2 py-1 rounded ${badgeColorClass}`}>{badge}</span>
   </div>
 );
 
-/**
- * AlertsPage
- *
- * Lightweight page: connects useAlerts hook and composes the AlertsTable
- * and AlertFilters components. Contains no business logic.
- */
 const AlertsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { alerts, stats, filters, setFilters } = useAlerts();
+  const { alerts, meta, filters, isLoading, error, page, setFilters, setPage } = useAlerts();
 
   const handleRowClick = (alert: Alert) => {
     navigate(`/alerts/${alert.id}`);
   };
+
+  const criticalCount = alerts.filter((a) => a.severity === 'critical').length;
+  const investigatingCount = alerts.filter((a) => a.status === 'investigating').length;
+  const resolvedCount = alerts.filter((a) => a.status === 'resolved').length;
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -63,19 +50,56 @@ const AlertsPage: React.FC = () => {
         </div>
 
         {/* Stats */}
-        {stats && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard label="Total Alerts" value={stats.total} badge="+12%" badgeColor="success" borderColor="border-border-dark" />
-            <StatCard label="Critical Threats" value={stats.critical} badge="+5%" badgeColor="danger" borderColor="border-danger/30" glow />
-            <StatCard label="Investigating" value={stats.investigating} badge="Active" badgeColor="warning" borderColor="border-border-dark" />
-            <StatCard label="Resolved" value={stats.resolved} badge="+8%" badgeColor="success" borderColor="border-border-dark" />
-          </div>
-        )}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Total Alerts"
+            value={meta ? meta.total.toLocaleString() : '—'}
+            badge={meta ? `${meta.pages} pages` : ''}
+            badgeColorClass="bg-blue-500/10 text-blue-400"
+            borderColor="border-border-dark"
+          />
+          <StatCard
+            label="Critical Threats"
+            value={String(criticalCount)}
+            badge="Critical"
+            badgeColorClass="bg-red-500/10 text-red-400"
+            borderColor="border-red-500/30"
+            textColorClass="text-red-400"
+          />
+          <StatCard
+            label="Investigating"
+            value={String(investigatingCount)}
+            badge="Active"
+            badgeColorClass="bg-yellow-500/10 text-yellow-400"
+            borderColor="border-border-dark"
+          />
+          <StatCard
+            label="Resolved"
+            value={String(resolvedCount)}
+            badge="Done"
+            badgeColorClass="bg-green-500/10 text-green-400"
+            borderColor="border-border-dark"
+          />
+        </div>
 
         <AlertFiltersBar filters={filters} onChange={setFilters} />
       </div>
 
-      <AlertsTable alerts={alerts} onRowClick={handleRowClick} />
+      {error ? (
+        <div className="flex items-center justify-center h-40 text-red-400 text-sm">{error}</div>
+      ) : isLoading ? (
+        <div className="flex items-center justify-center h-40 text-slate-400 text-sm">
+          Loading alerts…
+        </div>
+      ) : (
+        <AlertsTable
+          alerts={alerts}
+          meta={meta}
+          page={page}
+          onRowClick={handleRowClick}
+          onPageChange={setPage}
+        />
+      )}
     </div>
   );
 };

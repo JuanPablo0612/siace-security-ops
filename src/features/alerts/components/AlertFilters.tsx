@@ -40,10 +40,10 @@ const AlertFiltersBar: React.FC<AlertFiltersProps> = ({ filters, onChange }) => 
           onChange={(e) => update({ severity: e.target.value })}
         >
           <option value="all">Severity: All</option>
-          <option value="Critical">Critical</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
         </select>
         <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none text-[20px]">
           expand_more
@@ -58,9 +58,10 @@ const AlertFiltersBar: React.FC<AlertFiltersProps> = ({ filters, onChange }) => 
           onChange={(e) => update({ status: e.target.value })}
         >
           <option value="all">Status: All</option>
-          <option value="Open">Open</option>
-          <option value="Investigating">Investigating</option>
-          <option value="Resolved">Resolved</option>
+          <option value="open">Open</option>
+          <option value="investigating">Investigating</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
         </select>
         <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none text-[20px]">
           expand_more

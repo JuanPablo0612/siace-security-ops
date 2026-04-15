@@ -8,6 +8,13 @@ import type {
   QuickAction,
 } from '../types/dashboard.types';
 
+const QUICK_ACTIONS: QuickAction[] = [
+  { icon: 'add_moderator', label: 'Run Scan' },
+  { icon: 'summarize', label: 'Export Log' },
+  { icon: 'person_add', label: 'Add User' },
+  { icon: 'settings_applications', label: 'Config' },
+];
+
 interface DashboardData {
   metrics: DashboardMetrics | null;
   weeklyThreatData: WeeklyThreatDataPoint[];
@@ -16,43 +23,44 @@ interface DashboardData {
   quickActions: QuickAction[];
   timeRange: string;
   isLoading: boolean;
+  error: string | null;
   setTimeRange: (range: string) => void;
 }
 
-/**
- * useDashboardData
- *
- * Owns all business logic and data fetching for the Dashboard feature.
- * Exposes structured data to page and component consumers.
- */
 export function useDashboardData(): DashboardData {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [weeklyThreatData, setWeeklyThreatData] = useState<WeeklyThreatDataPoint[]>([]);
   const [recentAlerts, setRecentAlerts] = useState<RecentAlert[]>([]);
   const [componentStatuses, setComponentStatuses] = useState<ComponentStatus[]>([]);
-  const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [timeRange, setTimeRange] = useState('Last 7 Days');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     const loadAll = async () => {
       setIsLoading(true);
-      const [m, w, ra, cs, qa] = await Promise.all([
-        dashboardService.getMetrics(),
-        dashboardService.getWeeklyThreatData(),
-        dashboardService.getRecentAlerts(),
-        dashboardService.getComponentStatuses(),
-        dashboardService.getQuickActions(),
-      ]);
-      if (cancelled) return;
-      setMetrics(m);
-      setWeeklyThreatData(w);
-      setRecentAlerts(ra);
-      setComponentStatuses(cs);
-      setQuickActions(qa);
-      setIsLoading(false);
+      setError(null);
+      try {
+        const [m, w, ra, cs] = await Promise.all([
+          dashboardService.getMetrics(),
+          dashboardService.getWeeklyThreatData(),
+          dashboardService.getRecentAlerts(),
+          dashboardService.getComponentStatuses(),
+        ]);
+        if (cancelled) return;
+        setMetrics(m);
+        setWeeklyThreatData(w);
+        setRecentAlerts(ra);
+        setComponentStatuses(cs);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
     };
 
     loadAll();
@@ -64,9 +72,10 @@ export function useDashboardData(): DashboardData {
     weeklyThreatData,
     recentAlerts,
     componentStatuses,
-    quickActions,
+    quickActions: QUICK_ACTIONS,
     timeRange,
     isLoading,
+    error,
     setTimeRange,
   };
 }

@@ -1,4 +1,4 @@
-export type HealthStatus = 'Operational' | 'Degraded' | 'Outage' | 'Maintenance';
+export type HealthStatus = 'Operational' | 'Degraded' | 'Outage' | 'Maintenance' | 'healthy' | 'unhealthy' | 'ok';
 
 export interface ComponentHealth {
   id: string;
@@ -6,12 +6,10 @@ export interface ComponentHealth {
   subLabel: string;
   icon: string;
   status: HealthStatus;
-  /** CPU / load percentage (0‑100) */
   load: number;
-  /** Uptime percentage string, e.g. "99.98%" */
   uptime: string;
-  /** AWS / cloud region label */
   region: string;
+  responseTimeMs?: number;
 }
 
 export interface SystemMetric {

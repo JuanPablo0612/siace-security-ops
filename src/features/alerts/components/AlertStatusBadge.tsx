@@ -6,21 +6,24 @@ interface AlertStatusBadgeProps {
 }
 
 const STATUS_CLASSES: Record<AlertStatus, string> = {
-  Open: 'bg-red-500/10 text-red-400',
-  Investigating: 'bg-yellow-500/10 text-yellow-500',
-  Resolved: 'bg-green-500/10 text-green-400',
+  open: 'bg-red-500/10 text-red-400',
+  investigating: 'bg-yellow-500/10 text-yellow-500',
+  resolved: 'bg-green-500/10 text-green-400',
+  closed: 'bg-slate-500/10 text-slate-400',
 };
 
-/**
- * AlertStatusBadge
- *
- * Renders a colour-coded badge for an alert's current status.
- */
+const STATUS_LABELS: Record<AlertStatus, string> = {
+  open: 'Open',
+  investigating: 'Investigating',
+  resolved: 'Resolved',
+  closed: 'Closed',
+};
+
 const AlertStatusBadge: React.FC<AlertStatusBadgeProps> = ({ status }) => (
   <span
-    className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${STATUS_CLASSES[status]}`}
+    className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${STATUS_CLASSES[status] ?? 'bg-slate-500/10 text-slate-400'}`}
   >
-    {status}
+    {STATUS_LABELS[status] ?? status}
   </span>
 );
 

@@ -5,14 +5,21 @@ interface HealthCardProps {
   component: ComponentHealth;
 }
 
-const STATUS_CONFIG: Record<
-  HealthStatus,
-  { dot: string; badge: string; label: string }
-> = {
+const STATUS_CONFIG: Record<string, { dot: string; badge: string; label: string }> = {
   Operational: {
     dot: 'bg-green-400',
     badge: 'bg-green-500/10 text-green-400 border border-green-500/20',
     label: 'Operational',
+  },
+  healthy: {
+    dot: 'bg-green-400',
+    badge: 'bg-green-500/10 text-green-400 border border-green-500/20',
+    label: 'Healthy',
+  },
+  ok: {
+    dot: 'bg-green-400',
+    badge: 'bg-green-500/10 text-green-400 border border-green-500/20',
+    label: 'OK',
   },
   Degraded: {
     dot: 'bg-yellow-400 animate-pulse',
@@ -24,11 +31,22 @@ const STATUS_CONFIG: Record<
     badge: 'bg-red-500/10 text-red-400 border border-red-500/20',
     label: 'Outage',
   },
+  unhealthy: {
+    dot: 'bg-red-400 animate-ping',
+    badge: 'bg-red-500/10 text-red-400 border border-red-500/20',
+    label: 'Unavailable',
+  },
   Maintenance: {
     dot: 'bg-blue-400',
     badge: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
     label: 'Maintenance',
   },
+};
+
+const DEFAULT_STATUS_CONFIG = {
+  dot: 'bg-slate-400',
+  badge: 'bg-slate-500/10 text-slate-400 border border-slate-500/20',
+  label: 'Unknown',
 };
 
 /**
@@ -38,7 +56,7 @@ const STATUS_CONFIG: Record<
  * current load bar, uptime, and cloud region.
  */
 const HealthCard: React.FC<HealthCardProps> = ({ component }) => {
-  const cfg = STATUS_CONFIG[component.status];
+  const cfg = STATUS_CONFIG[component.status] ?? DEFAULT_STATUS_CONFIG;
 
   return (
     <div className="bg-card-dark rounded-xl border border-border-dark p-5 shadow-xl shadow-black/20 group hover:border-primary/30 transition-colors">

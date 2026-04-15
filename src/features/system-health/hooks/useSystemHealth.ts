@@ -7,32 +7,42 @@ interface UseSystemHealthResult {
   components: ComponentHealth[];
   logs: SystemLogEntry[];
   isLoading: boolean;
+  error: string | null;
 }
 
-/**
- * useSystemHealth
- *
- * Fetches all infrastructure health data in parallel and exposes
- * a unified loading state to the page.
- */
 export function useSystemHealth(): UseSystemHealthResult {
   const [metrics, setMetrics] = useState<SystemMetric[]>([]);
   const [components, setComponents] = useState<ComponentHealth[]>([]);
   const [logs, setLogs] = useState<SystemLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      systemHealthService.getMetrics(),
-      systemHealthService.getComponentStatuses(),
-      systemHealthService.getSystemLogs(),
-    ]).then(([m, c, l]) => {
-      setMetrics(m);
-      setComponents(c);
-      setLogs(l);
-      setIsLoading(false);
-    });
+    let cancelled = false;
+    const load = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const [m, c, l] = await Promise.all([
+          systemHealthService.getMetrics(),
+          systemHealthService.getComponentStatuses(),
+          systemHealthService.getSystemLogs(),
+        ]);
+        if (cancelled) return;
+        setMetrics(m);
+        setComponents(c);
+        setLogs(l);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load health data');
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
   }, []);
 
-  return { metrics, components, logs, isLoading };
+  return { metrics, components, logs, isLoading, error };
 }

@@ -7,13 +7,17 @@ export type ScanInterval =
 export type RetentionPolicy = '30 Days' | '90 Days' | '1 Year' | 'Indefinite (S3 Archive)';
 
 export interface NotificationChannel {
-  icon: string;
-  label: string;
+  id: string;
+  channel: string;
+  config: Record<string, unknown>;
+  isEnabled: boolean;
 }
 
 export interface NotificationPreference {
+  id: string;
   label: string;
   sub: string;
+  channel: string;
   enabled: boolean;
 }
 
@@ -22,4 +26,11 @@ export interface ConfigurationState {
   scanInterval: ScanInterval;
   retentionPolicy: RetentionPolicy;
   notifications: NotificationPreference[];
+}
+
+export interface SystemConfigData {
+  sensitivity?: number;
+  scan_interval?: string;
+  retention_policy?: string;
+  [key: string]: unknown;
 }

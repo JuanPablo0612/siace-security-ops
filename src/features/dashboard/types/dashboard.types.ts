@@ -1,11 +1,10 @@
 export interface DashboardMetrics {
-  totalEvents: string;
-  aiAnomalies: number;
-  criticalAlerts: number;
-  avgResponseTime: string;
-  globalRiskScore: number;
-  securityGrade: string;
-  lastScan: string;
+  totalAlerts: number;
+  criticalCount: number;
+  openIncidents: number;
+  avgResponseTimeMs: number;
+  riskScore: number;
+  riskLevel: string;
 }
 
 export interface WeeklyThreatDataPoint {
@@ -14,9 +13,11 @@ export interface WeeklyThreatDataPoint {
 }
 
 export interface RecentAlert {
+  id: string;
   name: string;
   time: string;
   severity: string;
+  status: string;
   color: string;
 }
 

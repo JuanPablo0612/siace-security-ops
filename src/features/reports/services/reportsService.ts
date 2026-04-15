@@ -1,39 +1,117 @@
-import type { ReportDocument, ScheduledJob, ReportsStats } from '../types/reports.types';
+import { apiClient } from '@/shared/services/apiClient';
+import type { ReportDocument, ScheduledJob, ReportsStats, ReportFormState } from '../types/reports.types';
 
-/**
- * reportsService
- *
- * API layer for reports generation and archive retrieval.
- * Replace mock data with real HTTP calls.
- */
+interface ApiReport {
+  id: string;
+  title: string;
+  report_type: string;
+  file_format: string;
+  file_path: string | null;
+  generated_by: string;
+  created_at: string;
+}
+
+interface ApiReportList {
+  data: ApiReport[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
+
+interface ApiSchedule {
+  id: string;
+  name: string;
+  report_type: string;
+  frequency: string;
+  format: string;
+  recipients: string[];
+  is_active: boolean;
+  created_at: string;
+  last_generated: string | null;
+}
+
+interface ApiScheduleList {
+  data?: ApiSchedule[];
+}
+
+function formatToIcon(format: string): string {
+  const f = format.toLowerCase();
+  if (f === 'pdf') return 'picture_as_pdf';
+  if (f === 'csv') return 'table_view';
+  if (f === 'json') return 'data_object';
+  return 'description';
+}
+
+function formatToColor(format: string): string {
+  const f = format.toLowerCase();
+  if (f === 'pdf') return 'red';
+  if (f === 'csv') return 'green';
+  if (f === 'json') return 'yellow';
+  return 'blue';
+}
+
+function mapReport(r: ApiReport): ReportDocument {
+  return {
+    id: r.id,
+    title: r.title,
+    date: new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    type: r.report_type,
+    format: r.file_format,
+    icon: formatToIcon(r.file_format),
+    color: formatToColor(r.file_format),
+    filePath: r.file_path,
+  };
+}
+
+function mapSchedule(s: ApiSchedule): ScheduledJob {
+  return {
+    id: s.id,
+    name: s.name,
+    schedule: s.frequency,
+    status: s.is_active ? 'Active' : 'Paused',
+    reportType: s.report_type,
+    format: s.format,
+    recipients: s.recipients,
+  };
+}
+
 export const reportsService = {
   getRecentDocuments: async (): Promise<ReportDocument[]> => {
-    // TODO: GET /api/reports/archive
-    return [
-      { title: 'October Security Audit', date: 'Oct 24, 2023', type: 'Full Audit', size: '2.4 MB', icon: 'picture_as_pdf', color: 'red' },
-      { title: 'Q3 Incident Log', date: 'Oct 01, 2023', type: 'Incidents', size: '856 KB', icon: 'table_view', color: 'green' },
-      { title: 'User Access Review', date: 'Sep 28, 2023', type: 'IAM', size: '1.1 MB', icon: 'picture_as_pdf', color: 'red' },
-      { title: 'Firewall Config Backup', date: 'Sep 15, 2023', type: 'Config', size: '45 KB', icon: 'data_object', color: 'yellow' },
-      { title: 'September Exec Summary', date: 'Sep 30, 2023', type: 'Summary', size: '3.2 MB', icon: 'picture_as_pdf', color: 'red' },
-      { title: 'Penetration Test Results', date: 'Aug 22, 2023', type: 'External', size: '12.8 MB', icon: 'lock', color: 'blue' },
-    ];
+    const res = await apiClient.get<ApiReportList>('/api/reports?size=20');
+    return res.data.map(mapReport);
   },
 
   getScheduledJobs: async (): Promise<ScheduledJob[]> => {
-    // TODO: GET /api/reports/scheduled
-    return [
-      { name: 'Weekly Exec Summary', schedule: 'Every Mon, 9:00 AM', status: 'Active' },
-      { name: 'Monthly Compliance', schedule: '1st of Month', status: 'Paused' },
-    ];
+    const res = await apiClient.get<ApiScheduleList | ApiSchedule[]>('/api/reports/schedule');
+    const data = Array.isArray(res) ? res : (res as ApiScheduleList).data ?? [];
+    return data.map(mapSchedule);
   },
 
-  getStats: async (): Promise<ReportsStats> => {
-    // TODO: GET /api/reports/stats
-    return { totalGenerated: 124, archiveSize: '12GB', scheduledTasks: 4 };
+  getStats: async (documents: ReportDocument[], scheduledJobs: ScheduledJob[]): Promise<ReportsStats> => {
+    return {
+      totalGenerated: documents.length,
+      scheduledTasks: scheduledJobs.filter((j) => j.status === 'Active').length,
+    };
   },
 
-  generateReport: async (/* form: ReportFormState */): Promise<void> => {
-    // TODO: POST /api/reports/generate
-    await new Promise((resolve) => setTimeout(resolve, 500));
+  generateReport: async (form: ReportFormState): Promise<string> => {
+    const res = await apiClient.post<{ task_id: string; message: string }>('/api/reports/generate', {
+      report_type: form.reportType,
+      format: form.format,
+      date_from: form.startDate || null,
+      date_to: form.endDate || null,
+    });
+    return res.task_id;
+  },
+
+  downloadReport: async (reportId: string): Promise<void> => {
+    const token = localStorage.getItem('siace_access_token');
+    const url = `${(import.meta as any).env?.VITE_API_URL ?? ''}/api/reports/${reportId}/download`;
+    const a = document.createElement('a');
+    a.href = token ? `${url}?token=${token}` : url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.click();
   },
 };

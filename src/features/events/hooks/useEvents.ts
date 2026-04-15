@@ -1,46 +1,49 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { eventsService } from '../services/eventsService';
-import type { SecurityEvent, EventFiltersState, EventType } from '../types/events.types';
+import type { SecurityEvent, EventFiltersState, EventType, EventListMeta } from '../types/events.types';
 
 interface UseEventsResult {
   events: SecurityEvent[];
-  filteredEvents: SecurityEvent[];
+  meta: EventListMeta | null;
   filters: EventFiltersState;
   isLoading: boolean;
+  error: string | null;
   setTypeFilter: (type: EventType) => void;
 }
 
-/**
- * useEvents
- *
- * Fetches security events and manages the active type filter.
- * Derived filteredEvents list is computed here — pages only consume results.
- */
 export function useEvents(): UseEventsResult {
   const [events, setEvents] = useState<SecurityEvent[]>([]);
+  const [meta, setMeta] = useState<EventListMeta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<EventFiltersState>({ activeType: 'All' });
 
+  const load = useCallback(async (cancelled: { value: boolean }) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await eventsService.getEvents(
+        filters.activeType !== 'All' ? filters.activeType : undefined
+      );
+      if (cancelled.value) return;
+      setEvents(result.events);
+      setMeta(result.meta);
+    } catch (err) {
+      if (!cancelled.value) {
+        setError(err instanceof Error ? err.message : 'Failed to load events');
+      }
+    } finally {
+      if (!cancelled.value) setIsLoading(false);
+    }
+  }, [filters]);
+
   useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      setIsLoading(true);
-      const data = await eventsService.getEvents();
-      if (cancelled) return;
-      setEvents(data);
-      setIsLoading(false);
-    };
-    load();
-    return () => { cancelled = true; };
-  }, []);
+    const cancelled = { value: false };
+    load(cancelled);
+    return () => { cancelled.value = true; };
+  }, [load]);
 
-  const filteredEvents =
-    filters.activeType === 'All'
-      ? events
-      : events.filter((e) => e.type === filters.activeType);
+  const setTypeFilter = (type: EventType) => setFilters({ activeType: type });
 
-  const setTypeFilter = (type: EventType) =>
-    setFilters({ activeType: type });
-
-  return { events, filteredEvents, filters, isLoading, setTypeFilter };
+  return { events, meta, filters, isLoading, error, setTypeFilter };
 }

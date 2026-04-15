@@ -1,33 +1,133 @@
-import type { Alert, AlertStats } from '../types/alerts.types';
+import { apiClient } from '@/shared/services/apiClient';
+import type { Alert, AlertDetail, AlertFilters, AlertListMeta } from '../types/alerts.types';
 
-const MOCK_ALERTS: Alert[] = [
-  { id: '#ALT-2023-849', time: 'Oct 24, 09:41:22', ip: '45.33.22.11', type: 'SQL Injection Attempt', score: 92, severity: 'Critical', status: 'Open', color: 'danger' },
-  { id: '#ALT-2023-848', time: 'Oct 24, 09:38:15', ip: '192.168.4.22', type: 'Suspicious Login Failure', score: 78, severity: 'High', status: 'Investigating', color: 'warning' },
-  { id: '#ALT-2023-845', time: 'Oct 24, 09:12:05', ip: '10.0.0.55', type: 'Port Scan Detected', score: 55, severity: 'Medium', status: 'Resolved', color: 'yellow' },
-  { id: '#ALT-2023-842', time: 'Oct 24, 08:55:41', ip: '172.16.254.1', type: 'Unusual Outbound Traffic', score: 35, severity: 'Low', status: 'Open', color: 'blue' },
-  { id: '#ALT-2023-839', time: 'Oct 24, 08:30:11', ip: '89.201.12.4', type: 'Malware Signature Match', score: 98, severity: 'Critical', status: 'Investigating', color: 'danger' },
-  { id: '#ALT-2023-830', time: 'Oct 24, 07:15:29', ip: '192.168.1.105', type: 'Privilege Escalation', score: 82, severity: 'High', status: 'Open', color: 'warning' },
-];
+interface ApiAlert {
+  id: string;
+  title: string;
+  description: string;
+  severity: string;
+  alert_type: string;
+  source_ip: string;
+  destination_ip: string | null;
+  protocol: string | null;
+  port: number | null;
+  status: string;
+  confidence_score: number;
+  assigned_to: string | null;
+  notes: string | null;
+  is_acknowledged: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
-/**
- * alertsService
- *
- * API communication layer for the Alerts feature.
- * Mock data is returned synchronously; replace with real HTTP calls.
- */
+interface ApiAlertDetail extends ApiAlert {
+  recommendations: Array<{
+    id: string;
+    recommendation_type: string;
+    action_text: string;
+    confidence: number;
+    is_implemented: boolean;
+  }>;
+  recommended_actions: string[];
+}
+
+interface ApiAlertList {
+  data: ApiAlert[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
+
+function severityToColor(severity: string): Alert['color'] {
+  const s = severity.toLowerCase();
+  if (s === 'critical') return 'red';
+  if (s === 'high') return 'orange';
+  if (s === 'medium') return 'yellow';
+  return 'blue';
+}
+
+function mapAlert(a: ApiAlert): Alert {
+  return {
+    id: a.id,
+    title: a.title,
+    description: a.description,
+    severity: a.severity.toLowerCase() as Alert['severity'],
+    alertType: a.alert_type,
+    sourceIp: a.source_ip,
+    destinationIp: a.destination_ip,
+    protocol: a.protocol,
+    port: a.port,
+    status: a.status.toLowerCase() as Alert['status'],
+    confidenceScore: a.confidence_score,
+    assignedTo: a.assigned_to,
+    notes: a.notes,
+    isAcknowledged: a.is_acknowledged,
+    createdAt: a.created_at,
+    updatedAt: a.updated_at,
+    color: severityToColor(a.severity),
+  };
+}
+
+function mapAlertDetail(a: ApiAlertDetail): AlertDetail {
+  return {
+    ...mapAlert(a),
+    recommendations: a.recommendations.map((r) => ({
+      id: r.id,
+      recommendationType: r.recommendation_type,
+      actionText: r.action_text,
+      confidence: r.confidence,
+      isImplemented: r.is_implemented,
+    })),
+    recommendedActions: a.recommended_actions ?? [],
+  };
+}
+
+function buildQueryString(filters: AlertFilters, page: number, size: number): string {
+  const params = new URLSearchParams();
+  params.set('page', String(page));
+  params.set('size', String(size));
+  if (filters.severity && filters.severity !== 'all') params.set('severity', filters.severity);
+  if (filters.status && filters.status !== 'all') params.set('status', filters.status);
+  if (filters.search) params.set('source_ip', filters.search);
+  return params.toString();
+}
+
 export const alertsService = {
-  getAlerts: async (): Promise<Alert[]> => {
-    // TODO: GET /api/alerts
-    return MOCK_ALERTS;
+  getAlerts: async (
+    filters: AlertFilters,
+    page = 1,
+    size = 20
+  ): Promise<{ alerts: Alert[]; meta: AlertListMeta }> => {
+    const qs = buildQueryString(filters, page, size);
+    const res = await apiClient.get<ApiAlertList>(`/api/alerts?${qs}`);
+    return {
+      alerts: res.data.map(mapAlert),
+      meta: { total: res.total, page: res.page, size: res.size, pages: res.pages },
+    };
   },
 
-  getAlertById: async (id: string): Promise<Alert | undefined> => {
-    // TODO: GET /api/alerts/:id
-    return MOCK_ALERTS.find((a) => a.id === id);
+  getAlertById: async (id: string): Promise<AlertDetail> => {
+    const res = await apiClient.get<ApiAlertDetail>(`/api/alerts/${id}`);
+    return mapAlertDetail(res);
   },
 
-  getStats: async (): Promise<AlertStats> => {
-    // TODO: GET /api/alerts/stats
-    return { total: '1,248', critical: '42', investigating: '156', resolved: '1,042' };
+  updateAlert: async (
+    id: string,
+    update: { status?: string; notes?: string; is_acknowledged?: boolean }
+  ): Promise<Alert> => {
+    const res = await apiClient.patch<ApiAlert>(`/api/alerts/${id}`, update);
+    return mapAlert(res);
+  },
+
+  getAiRecommendations: async (id: string): Promise<AlertDetail['recommendations']> => {
+    const res = await apiClient.post<ApiAlertDetail>(`/api/alerts/${id}/ai-recommendations`, {});
+    return res.recommendations?.map((r) => ({
+      id: r.id,
+      recommendationType: r.recommendation_type,
+      actionText: r.action_text,
+      confidence: r.confidence,
+      isImplemented: r.is_implemented,
+    })) ?? [];
   },
 };

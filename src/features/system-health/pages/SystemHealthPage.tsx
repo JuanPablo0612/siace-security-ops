@@ -18,7 +18,7 @@ const LOG_TYPE_CLASSES: Record<SystemLogEntry['type'], { dot: string; text: stri
  * then composes UptimeIndicator, HealthCard grid, and event log.
  */
 const SystemHealthPage: React.FC = () => {
-  const { metrics, components, logs, isLoading } = useSystemHealth();
+  const { metrics, components, logs, isLoading, error } = useSystemHealth();
 
   if (isLoading) {
     return (
@@ -28,7 +28,13 @@ const SystemHealthPage: React.FC = () => {
     );
   }
 
-  const operational = components.filter((c) => c.status === 'Operational').length;
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-40 text-red-400 text-sm">{error}</div>
+    );
+  }
+
+  const operational = components.filter((c) => ['Operational', 'healthy', 'ok'].includes(c.status)).length;
 
   return (
     <div className="flex flex-col gap-8 items-center max-w-[1400px] mx-auto w-full">

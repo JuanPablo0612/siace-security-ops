@@ -8,12 +8,6 @@ import WeeklyTrendChart from '../components/WeeklyTrendChart';
 import RecentAlertsTable from '../components/RecentAlertsTable';
 import type { MetricCardData } from '../types/dashboard.types';
 
-/**
- * DashboardPage
- *
- * Lightweight page: connects useDashboardData hook to the
- * Dashboard UI components. Contains no business logic.
- */
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -23,13 +17,23 @@ const DashboardPage: React.FC = () => {
     componentStatuses,
     quickActions,
     timeRange,
+    isLoading,
+    error,
     setTimeRange,
   } = useDashboardData();
 
-  if (!metrics) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-40 text-slate-400 text-sm">
         Loading dashboard…
+      </div>
+    );
+  }
+
+  if (error || !metrics) {
+    return (
+      <div className="flex items-center justify-center h-40 text-red-400 text-sm">
+        {error ?? 'Failed to load dashboard data'}
       </div>
     );
   }
@@ -41,28 +45,28 @@ const DashboardPage: React.FC = () => {
       iconBg: 'bg-blue-500/10',
       trendIcon: 'trending_up',
       trendColor: 'text-success',
-      trendValue: '+12%',
-      title: 'Total Events',
-      value: metrics.totalEvents,
-    },
-    {
-      icon: 'smart_toy',
-      iconColor: 'text-purple-400',
-      iconBg: 'bg-purple-500/10',
-      trendIcon: 'priority_high',
-      trendColor: 'text-danger',
-      trendValue: '3 New',
-      title: 'AI Anomalies',
-      value: String(metrics.aiAnomalies),
+      trendValue: String(metrics.totalAlerts),
+      title: 'Total Alerts',
+      value: metrics.totalAlerts.toLocaleString(),
     },
     {
       icon: 'gpp_maybe',
       iconColor: 'text-red-400',
       iconBg: 'bg-red-500/10',
-      trendColor: 'text-slate-500',
-      trendText: 'Steady',
-      title: 'Critical Alerts',
-      value: String(metrics.criticalAlerts),
+      trendIcon: 'priority_high',
+      trendColor: 'text-danger',
+      trendValue: String(metrics.criticalCount),
+      title: 'Critical Threats',
+      value: String(metrics.criticalCount),
+    },
+    {
+      icon: 'policy',
+      iconColor: 'text-orange-400',
+      iconBg: 'bg-orange-500/10',
+      trendColor: 'text-warning',
+      trendText: 'Open',
+      title: 'Open Incidents',
+      value: String(metrics.openIncidents),
     },
     {
       icon: 'speed',
@@ -72,7 +76,7 @@ const DashboardPage: React.FC = () => {
       trendColor: 'text-success',
       trendValue: '-5%',
       title: 'Avg Response Time',
-      value: metrics.avgResponseTime,
+      value: `${metrics.avgResponseTimeMs}ms`,
     },
   ];
 
@@ -81,9 +85,9 @@ const DashboardPage: React.FC = () => {
       {/* Top: Risk gauge + metric cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <RiskGauge
-          score={metrics.globalRiskScore}
-          grade={metrics.securityGrade}
-          lastScan={metrics.lastScan}
+          score={metrics.riskScore}
+          grade={metrics.riskLevel}
+          lastScan="Live"
         />
         <MetricsCards cards={metricCards} />
       </div>
@@ -106,22 +110,26 @@ const DashboardPage: React.FC = () => {
         {/* Component status */}
         <div className="rounded-xl border border-border-dark bg-card-dark p-6">
           <h3 className="text-base font-semibold text-white mb-4">Component Status</h3>
-          <div className="grid grid-cols-2 gap-4">
-            {componentStatuses.map((comp, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-3 rounded-lg bg-background-dark border border-border-dark"
-              >
-                <div className="flex items-center gap-3">
-                  <span className={`material-symbols-outlined text-${comp.color}-500`}>
-                    {comp.icon}
-                  </span>
-                  <span className="text-sm font-medium text-slate-300">{comp.label}</span>
+          {componentStatuses.length === 0 ? (
+            <p className="text-slate-400 text-sm">No services available</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {componentStatuses.map((comp, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between p-3 rounded-lg bg-background-dark border border-border-dark"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`material-symbols-outlined text-${comp.color}-500`}>
+                      {comp.icon}
+                    </span>
+                    <span className="text-sm font-medium text-slate-300 truncate">{comp.label}</span>
+                  </div>
+                  <span className={`h-2 w-2 flex-shrink-0 rounded-full ${comp.statusClass}`}></span>
                 </div>
-                <span className={`h-2 w-2 rounded-full ${comp.statusClass}`}></span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Quick actions */}

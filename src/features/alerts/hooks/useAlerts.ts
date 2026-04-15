@@ -1,25 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { alertsService } from '../services/alertsService';
-import type { Alert, AlertFilters, AlertStats } from '../types/alerts.types';
+import type { Alert, AlertFilters, AlertListMeta } from '../types/alerts.types';
 
 interface UseAlertsResult {
   alerts: Alert[];
-  stats: AlertStats | null;
+  meta: AlertListMeta | null;
   filters: AlertFilters;
   isLoading: boolean;
+  error: string | null;
+  page: number;
   setFilters: (f: AlertFilters) => void;
+  setPage: (p: number) => void;
 }
 
-/**
- * useAlerts
- *
- * Owns all business logic for the Alerts feature:
- * fetches alerts + stats, manages filter state.
- */
 export function useAlerts(): UseAlertsResult {
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [stats, setStats] = useState<AlertStats | null>(null);
+  const [meta, setMeta] = useState<AlertListMeta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<AlertFilters>({
     search: '',
     severity: 'all',
@@ -27,22 +26,33 @@ export function useAlerts(): UseAlertsResult {
     dateRange: 'Last 24 Hours',
   });
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      setIsLoading(true);
-      const [data, statsData] = await Promise.all([
-        alertsService.getAlerts(),
-        alertsService.getStats(),
-      ]);
-      if (cancelled) return;
-      setAlerts(data);
-      setStats(statsData);
-      setIsLoading(false);
-    };
-    load();
-    return () => { cancelled = true; };
-  }, []);
+  const load = useCallback(async (cancelled: { value: boolean }) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await alertsService.getAlerts(filters, page);
+      if (cancelled.value) return;
+      setAlerts(result.alerts);
+      setMeta(result.meta);
+    } catch (err) {
+      if (!cancelled.value) {
+        setError(err instanceof Error ? err.message : 'Failed to load alerts');
+      }
+    } finally {
+      if (!cancelled.value) setIsLoading(false);
+    }
+  }, [filters, page]);
 
-  return { alerts, stats, filters, isLoading, setFilters };
+  useEffect(() => {
+    const cancelled = { value: false };
+    load(cancelled);
+    return () => { cancelled.value = true; };
+  }, [load]);
+
+  const handleSetFilters = (f: AlertFilters) => {
+    setPage(1);
+    setFilters(f);
+  };
+
+  return { alerts, meta, filters, isLoading, error, page, setFilters: handleSetFilters, setPage };
 }

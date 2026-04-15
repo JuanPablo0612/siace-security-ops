@@ -1,5 +1,7 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { authService } from '@/features/auth/services/authService';
+import { ROUTES } from '@/constants';
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Acme Corp Dashboard',
@@ -26,6 +28,12 @@ function getTitle(pathname: string): string {
  */
 const Header: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await authService.logout();
+    navigate(ROUTES.LOGIN);
+  };
 
   return (
     <header className="z-10 flex h-16 w-full shrink-0 items-center justify-between border-b border-border-dark bg-background-dark/80 backdrop-blur-md px-6 lg:px-8">
@@ -67,11 +75,13 @@ const Header: React.FC = () => {
             <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary ring-2 ring-background-dark"></span>
           </button>
 
-          <div
-            className="h-8 w-8 rounded-full bg-cover bg-center border-2 border-slate-700 cursor-pointer hover:border-primary transition-colors"
-            style={{ backgroundImage: `url('https://i.pravatar.cc/150?img=11')` }}
-            title="User Profile"
-          />
+          <button
+            onClick={handleLogout}
+            className="rounded-lg p-2 text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
+            title="Sign out"
+          >
+            <span className="material-symbols-outlined text-[20px]">logout</span>
+          </button>
         </div>
       </div>
     </header>

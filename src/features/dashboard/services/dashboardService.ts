@@ -1,77 +1,125 @@
+import { apiClient } from '@/shared/services/apiClient';
 import type {
   DashboardMetrics,
   WeeklyThreatDataPoint,
   RecentAlert,
   ComponentStatus,
-  QuickAction,
 } from '../types/dashboard.types';
 
-/**
- * dashboardService
- *
- * Responsible for API communication for all dashboard data.
- * Replace the mock implementations with real fetch/axios calls
- * once a backend is available.
- */
+interface ApiMetrics {
+  total_alerts: number;
+  critical_count: number;
+  open_incidents: number;
+  avg_response_time_ms: number;
+}
+
+interface ApiRiskLevel {
+  risk_score: number;
+  level: string;
+}
+
+interface ApiWeeklyTrend {
+  data: Array<{ date: string; count: number }>;
+}
+
+interface ApiRecentAlert {
+  id: string;
+  title: string;
+  severity: string;
+  status: string;
+  source_ip: string;
+  created_at: string;
+}
+
+interface ApiRecentAlerts {
+  data: ApiRecentAlert[];
+  total: number;
+}
+
+interface ApiServiceHealth {
+  service: string;
+  status: string;
+  response_time_ms: number;
+  details: Record<string, unknown>;
+}
+
+function severityToColor(severity: string): string {
+  const s = severity.toLowerCase();
+  if (s === 'critical') return 'red';
+  if (s === 'high') return 'orange';
+  if (s === 'medium') return 'yellow';
+  return 'blue';
+}
+
+function serviceToIcon(service: string): string {
+  const s = service.toLowerCase();
+  if (s.includes('ai') || s.includes('model')) return 'smart_toy';
+  if (s.includes('db') || s.includes('database')) return 'database';
+  if (s.includes('firewall')) return 'shield';
+  if (s.includes('api')) return 'cloud_done';
+  if (s.includes('auth')) return 'lock';
+  if (s.includes('kafka') || s.includes('log')) return 'stream';
+  return 'dns';
+}
+
+function serviceStatusToColor(status: string): string {
+  const s = status.toLowerCase();
+  if (s === 'healthy' || s === 'operational' || s === 'ok') return 'green';
+  if (s === 'degraded' || s === 'warning') return 'yellow';
+  return 'red';
+}
+
+function serviceStatusToClass(status: string): string {
+  const color = serviceStatusToColor(status);
+  if (color === 'green') return 'bg-green-500';
+  if (color === 'yellow') return 'bg-yellow-500 animate-pulse';
+  return 'bg-red-500 animate-pulse';
+}
+
 export const dashboardService = {
   getMetrics: async (): Promise<DashboardMetrics> => {
-    // TODO: GET /api/dashboard/metrics
+    const [metrics, risk] = await Promise.all([
+      apiClient.get<ApiMetrics>('/api/dashboard/metrics'),
+      apiClient.get<ApiRiskLevel>('/api/dashboard/risk-level'),
+    ]);
     return {
-      totalEvents: '12,450',
-      aiAnomalies: 3,
-      criticalAlerts: 0,
-      avgResponseTime: '12ms',
-      globalRiskScore: 72,
-      securityGrade: 'B+',
-      lastScan: '2m ago',
+      totalAlerts: metrics.total_alerts,
+      criticalCount: metrics.critical_count,
+      openIncidents: metrics.open_incidents,
+      avgResponseTimeMs: metrics.avg_response_time_ms,
+      riskScore: risk.risk_score,
+      riskLevel: risk.level,
     };
   },
 
   getWeeklyThreatData: async (): Promise<WeeklyThreatDataPoint[]> => {
-    // TODO: GET /api/dashboard/weekly-threats
-    return [
-      { name: 'Mon', value: 400 },
-      { name: 'Tue', value: 300 },
-      { name: 'Wed', value: 550 },
-      { name: 'Thu', value: 420 },
-      { name: 'Fri', value: 600 },
-      { name: 'Sat', value: 350 },
-      { name: 'Sun', value: 480 },
-      { name: 'Mon2', value: 520 },
-      { name: 'Tue2', value: 380 },
-      { name: 'Wed2', value: 650 },
-      { name: 'Thu2', value: 500 },
-      { name: 'Fri2', value: 450 },
-    ];
+    const res = await apiClient.get<ApiWeeklyTrend>('/api/dashboard/weekly-trend');
+    return res.data.map((d) => ({
+      name: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+      value: d.count,
+    }));
   },
 
   getRecentAlerts: async (): Promise<RecentAlert[]> => {
-    // TODO: GET /api/dashboard/recent-alerts
-    return [
-      { name: 'SQL Injection', time: '10:42 AM • DB-Server-01', severity: 'High', color: 'orange' },
-      { name: 'Login Failed', time: '09:15 AM • User: Admin', severity: 'Warn', color: 'yellow' },
-      { name: 'Port Scan', time: '08:30 AM • Firewall', severity: 'Info', color: 'blue' },
-      { name: 'New Device', time: '08:12 AM • Network', severity: 'Info', color: 'blue' },
-      { name: 'Policy Violation', time: 'Yesterday • User: Guest', severity: 'Warn', color: 'yellow' },
-    ];
+    const res = await apiClient.get<ApiRecentAlerts>('/api/dashboard/recent-alerts?limit=10');
+    return res.data.map((a) => ({
+      id: a.id,
+      name: a.title,
+      time: `${new Date(a.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} • ${a.source_ip}`,
+      severity: a.severity,
+      status: a.status,
+      color: severityToColor(a.severity),
+    }));
   },
 
   getComponentStatuses: async (): Promise<ComponentStatus[]> => {
-    // TODO: GET /api/dashboard/component-status
-    return [
-      { icon: 'cloud_done', label: 'Cloud API', color: 'green', statusClass: 'bg-green-500' },
-      { icon: 'database', label: 'Databases', color: 'green', statusClass: 'bg-green-500' },
-      { icon: 'bolt', label: 'AI Engine', color: 'yellow', statusClass: 'bg-yellow-500 animate-pulse' },
-      { icon: 'lock', label: 'Firewall', color: 'green', statusClass: 'bg-green-500' },
-    ];
-  },
-
-  getQuickActions: async (): Promise<QuickAction[]> => {
-    return [
-      { icon: 'add_moderator', label: 'Run Scan' },
-      { icon: 'summarize', label: 'Export Log' },
-      { icon: 'person_add', label: 'Add User' },
-      { icon: 'settings_applications', label: 'Config' },
-    ];
+    const services = await apiClient.get<ApiServiceHealth[]>('/api/health/services');
+    if (!Array.isArray(services) || services.length === 0) return [];
+    return services.map((s) => ({
+      icon: serviceToIcon(s.service),
+      label: s.service,
+      color: serviceStatusToColor(s.status),
+      statusClass: serviceStatusToClass(s.status),
+    }));
   },
 };

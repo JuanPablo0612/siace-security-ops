@@ -1,16 +1,38 @@
-export type AlertSeverity = 'Critical' | 'High' | 'Medium' | 'Low';
-export type AlertStatus = 'Open' | 'Investigating' | 'Resolved';
-export type AlertColor = 'danger' | 'warning' | 'yellow' | 'blue';
+export type AlertSeverity = 'critical' | 'high' | 'medium' | 'low';
+export type AlertStatus = 'open' | 'investigating' | 'resolved' | 'closed';
+export type AlertColor = 'red' | 'orange' | 'yellow' | 'blue';
 
 export interface Alert {
   id: string;
-  time: string;
-  ip: string;
-  type: string;
-  score: number;
+  title: string;
+  description: string;
   severity: AlertSeverity;
+  alertType: string;
+  sourceIp: string;
+  destinationIp: string | null;
+  protocol: string | null;
+  port: number | null;
   status: AlertStatus;
+  confidenceScore: number;
+  assignedTo: string | null;
+  notes: string | null;
+  isAcknowledged: boolean;
+  createdAt: string;
+  updatedAt: string;
   color: AlertColor;
+}
+
+export interface AlertDetail extends Alert {
+  recommendations: AlertRecommendation[];
+  recommendedActions: string[];
+}
+
+export interface AlertRecommendation {
+  id: string;
+  recommendationType: string;
+  actionText: string;
+  confidence: number;
+  isImplemented: boolean;
 }
 
 export interface AlertFilters {
@@ -25,4 +47,11 @@ export interface AlertStats {
   critical: string;
   investigating: string;
   resolved: string;
+}
+
+export interface AlertListMeta {
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
 }

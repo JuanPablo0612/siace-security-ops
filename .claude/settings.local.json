@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('PATHS:'\\); [print\\(f' {m.upper\\(\\)} {p}: {list\\(info.get\\(\\\\\"responses\\\\\",{}\\).keys\\(\\)\\)}'\\) for p,methods in d['paths'].items\\(\\) for m,info in methods.items\\(\\)]\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(open\\('C:/Users/galle/Downloads/siace-security-ops/openapi.json'\\)\\); print\\('PATHS:'\\); [print\\(f' {m.upper\\(\\)} {p}'\\) for p,methods in d['paths'].items\\(\\) for m,info in methods.items\\(\\)]\")",
+      "Bash(python *)",
+      "Bash(npm run *)",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"const j=require\\('./openapi.json'\\); const paths=Object.keys\\(j.paths\\).filter\\(p=>p.includes\\('register'\\)||p.includes\\('signup'\\)||p.includes\\('user'\\)\\); console.log\\(JSON.stringify\\(paths,null,2\\)\\)\")",
+      "Bash(node -e \"const j=require\\('./openapi.json'\\); console.log\\(JSON.stringify\\(j.paths['/api/auth/register'],null,2\\)\\)\")",
+      "Bash(node -e \"const j=require\\('./openapi.json'\\); console.log\\(JSON.stringify\\(j.components.schemas['UserCreate'],null,2\\)\\); console.log\\('---'\\); console.log\\(JSON.stringify\\(j.components.schemas['UserResponse'],null,2\\)\\)\")"
+    ]
+  }
+}

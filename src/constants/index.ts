@@ -1,6 +1,7 @@
 // Route path constants
 export const ROUTES = {
   LOGIN: '/login',
+  REGISTER: '/register',
   DASHBOARD: '/dashboard',
   ALERTS: '/alerts',
   ALERT_DETAIL: '/alerts/:id',

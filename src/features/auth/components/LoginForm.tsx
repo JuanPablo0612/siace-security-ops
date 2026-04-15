@@ -4,6 +4,7 @@ interface LoginFormProps {
   email: string;
   password: string;
   isLoading: boolean;
+  error?: string | null;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -19,12 +20,19 @@ const LoginForm: React.FC<LoginFormProps> = ({
   email,
   password,
   isLoading,
+  error,
   onEmailChange,
   onPasswordChange,
   onSubmit,
 }) => {
   return (
     <form onSubmit={onSubmit} className="space-y-5">
+      {error && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+          <span className="material-symbols-outlined text-[18px] flex-shrink-0">error</span>
+          {error}
+        </div>
+      )}
       {/* Email field */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-slate-200" htmlFor="email">
