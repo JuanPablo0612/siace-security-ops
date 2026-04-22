@@ -42,7 +42,7 @@ const AlertsTable: React.FC<AlertsTableProps> = ({ alerts, meta, page, onRowClic
                   className="hover:bg-white/5 transition-colors group cursor-pointer"
                   onClick={() => onRowClick(alert)}
                 >
-                  <td className="px-6 py-4 font-mono text-white text-xs">{alert.id.slice(0, 8)}…</td>
+                  <td className="px-6 py-4 font-mono text-white text-xs">{String(alert.id).slice(0, 8)}…</td>
                   <td className="px-6 py-4 text-slate-400">
                     {new Date(alert.createdAt).toLocaleString('en-US', {
                       month: 'short',

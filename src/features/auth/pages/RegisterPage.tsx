@@ -51,9 +51,7 @@ const RegisterPage: React.FC = () => {
             onFullNameChange={setFullName}
             onPasswordChange={setPassword}
             onConfirmPasswordChange={setConfirmPassword}
-            onSubmit={(e) => {
-              void handleSubmit(e.nativeEvent as SubmitEvent);
-            }}
+            onSubmit={handleSubmit}
           />
 
           <div className="mt-6 text-center text-sm text-slate-400">

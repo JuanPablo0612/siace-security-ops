@@ -12,7 +12,7 @@ interface RegisterFormProps {
   onFullNameChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onConfirmPasswordChange: (value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = ({

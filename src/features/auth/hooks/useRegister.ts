@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { SubmitEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants';
 import { authService } from '../services/authService';
@@ -13,7 +14,7 @@ export function useRegister() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (e: SubmitEvent) => {
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       setError('Passwords do not match.');

@@ -45,7 +45,7 @@ const WeeklyTrendChart: React.FC<WeeklyTrendChartProps> = ({
       </select>
     </div>
 
-    <div className="h-64 w-full bg-slate-800/20 rounded-lg border border-border-dark/50 relative">
+    <div className="h-64 w-full bg-slate-800/20 rounded-lg border border-border-dark/50 relative" style={{ minHeight: 0 }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data}>
           <defs>

@@ -7,7 +7,7 @@ interface LoginFormProps {
   error?: string | null;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
-  onSubmit: (e: SubmitEvent) => void;
+  onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
   onForgotPassword?: () => void;
 }
 
