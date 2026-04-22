@@ -1,4 +1,4 @@
-import { apiClient } from '@/shared/services/apiClient';
+import { apiClient, tokenStorage } from '@/shared/services/apiClient';
 import { API_BASE_URL } from '@/config';
 import type { ReportDocument, ScheduledJob, ReportsStats, ReportFormState } from '../types/reports.types';
 
@@ -108,7 +108,7 @@ export const reportsService = {
 
   downloadReport: async (reportId: string): Promise<void> => {
     if (!reportId) throw new Error('reportId is required');
-    const token = localStorage.getItem('siace_access_token');
+    const token = tokenStorage.getAccessToken();
     const url = `${API_BASE_URL}/api/reports/${reportId}/download`;
     const a = document.createElement('a');
     a.href = token ? `${url}?token=${token}` : url;

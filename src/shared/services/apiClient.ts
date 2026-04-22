@@ -67,7 +67,7 @@ async function request<T>(method: string, endpoint: string, body?: unknown): Pro
       }
     }
     tokenStorage.clearTokens();
-    window.location.hash = '/login';
+    window.location.replace('/#/login');
     throw new ApiError(401, 'Session expired. Please log in again.');
   }
 

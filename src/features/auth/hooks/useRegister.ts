@@ -13,7 +13,7 @@ export function useRegister() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
@@ -24,7 +24,7 @@ export function useRegister() {
       return;
     }
     if (new TextEncoder().encode(password).length > 72) {
-      setError('Password is too long. Please use 72 characters or fewer.');
+      setError('Password is too long. Please use 72 bytes or fewer.');
       return;
     }
     setIsLoading(true);

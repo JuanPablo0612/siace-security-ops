@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface LoginFormProps {
   email: string;
@@ -7,7 +7,7 @@ interface LoginFormProps {
   error?: string | null;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: SubmitEvent) => void;
   onForgotPassword?: () => void;
 }
 
@@ -27,6 +27,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
   onSubmit,
   onForgotPassword,
 }) => {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       {error && (
@@ -72,15 +74,19 @@ const LoginForm: React.FC<LoginFormProps> = ({
             name="password"
             placeholder="••••••••"
             required
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(e) => onPasswordChange(e.target.value)}
           />
           <button
             type="button"
+            onClick={() => setShowPassword((v) => !v)}
             className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-300 focus:outline-none"
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
-            <span className="material-symbols-outlined text-[20px]">visibility</span>
+            <span className="material-symbols-outlined text-[20px]">
+              {showPassword ? 'visibility_off' : 'visibility'}
+            </span>
           </button>
         </div>
       </div>
