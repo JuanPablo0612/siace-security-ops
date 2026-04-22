@@ -11,7 +11,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: ROUTES.DASHBOARD, icon: 'dashboard', label: 'Dashboard' },
-  { path: ROUTES.ALERTS, icon: 'notifications_active', label: 'Alerts', badge: 3 },
+  { path: ROUTES.ALERTS, icon: 'notifications_active', label: 'Alerts' },
   { path: ROUTES.EVENTS, icon: 'timeline', label: 'Events' },
   { path: ROUTES.REPORTS, icon: 'description', label: 'Reports' },
   { path: ROUTES.CONFIGURATION, icon: 'settings', label: 'Config' },

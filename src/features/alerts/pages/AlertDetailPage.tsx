@@ -132,7 +132,11 @@ const AlertDetailPage: React.FC = () => {
             <span className="material-symbols-outlined text-lg">arrow_back</span>
             Back
           </button>
-          <button className="px-4 py-2 rounded-lg border border-border-dark bg-surface-dark text-slate-400 hover:text-white hover:border-primary/50 transition-all flex items-center gap-2 text-sm font-medium shadow-sm">
+          <button
+            disabled
+            title="Alert history coming soon"
+            className="px-4 py-2 rounded-lg border border-border-dark bg-surface-dark text-slate-400 flex items-center gap-2 text-sm font-medium shadow-sm opacity-40 cursor-not-allowed"
+          >
             <span className="material-symbols-outlined text-lg">history</span>
             History
           </button>

@@ -8,6 +8,7 @@ interface LoginFormProps {
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  onForgotPassword?: () => void;
 }
 
 /**
@@ -24,6 +25,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   onEmailChange,
   onPasswordChange,
   onSubmit,
+  onForgotPassword,
 }) => {
   return (
     <form onSubmit={onSubmit} className="space-y-5">
@@ -97,9 +99,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
           </label>
         </div>
         <div className="text-sm">
-          <a className="font-medium text-primary hover:text-primary-hover transition-colors" href="#">
+          <button
+            type="button"
+            onClick={onForgotPassword}
+            disabled={!onForgotPassword}
+            className="font-medium text-primary hover:text-primary-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
             Forgot password?
-          </a>
+          </button>
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import { apiClient } from '@/shared/services/apiClient';
+import { API_BASE_URL } from '@/config';
 import type { ReportDocument, ScheduledJob, ReportsStats, ReportFormState } from '../types/reports.types';
 
 interface ApiReport {
@@ -106,12 +107,15 @@ export const reportsService = {
   },
 
   downloadReport: async (reportId: string): Promise<void> => {
+    if (!reportId) throw new Error('reportId is required');
     const token = localStorage.getItem('siace_access_token');
-    const url = `${(import.meta as any).env?.VITE_API_URL ?? ''}/api/reports/${reportId}/download`;
+    const url = `${API_BASE_URL}/api/reports/${reportId}/download`;
     const a = document.createElement('a');
     a.href = token ? `${url}?token=${token}` : url;
-    a.target = '_blank';
-    a.rel = 'noopener';
+    a.download = '';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
   },
 };

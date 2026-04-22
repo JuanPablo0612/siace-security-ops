@@ -1,5 +1,5 @@
 import { apiClient } from '@/shared/services/apiClient';
-import type { Alert, AlertDetail, AlertFilters, AlertListMeta } from '../types/alerts.types';
+import type { Alert, AlertDetail, AlertFilters, AlertListMeta, AlertStatus } from '../types/alerts.types';
 
 interface ApiAlert {
   id: string;
@@ -114,7 +114,7 @@ export const alertsService = {
 
   updateAlert: async (
     id: string,
-    update: { status?: string; notes?: string; is_acknowledged?: boolean }
+    update: { status?: AlertStatus; notes?: string; is_acknowledged?: boolean }
   ): Promise<Alert> => {
     const res = await apiClient.patch<ApiAlert>(`/api/alerts/${id}`, update);
     return mapAlert(res);
