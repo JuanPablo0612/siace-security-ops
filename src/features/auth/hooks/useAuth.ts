@@ -3,6 +3,7 @@ import type { SubmitEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants';
 import { authService } from '../services/authService';
+import { ApiError } from '@/shared/services/apiClient';
 
 export function useAuth() {
   const navigate = useNavigate();
@@ -19,9 +20,12 @@ export function useAuth() {
       await authService.login({ email, password });
       navigate(ROUTES.DASHBOARD);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Authentication failed. Please try again.';
-      setError(message);
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        const message = err instanceof Error ? err.message : 'Authentication failed. Please try again.';
+        setError(message);
+      }
     } finally {
       setIsLoading(false);
     }

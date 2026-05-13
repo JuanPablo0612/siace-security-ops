@@ -36,16 +36,17 @@ async function buildHeaders(): Promise<Record<string, string>> {
 async function request<T>(method: string, endpoint: string, body?: unknown): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
+  const hadAccessToken = !!tokenStorage.getAccessToken();
+
   const res = await fetch(url, {
     method,
     headers: await buildHeaders(),
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
-
-  // Attempt token refresh on 401
+  // Attempt token refresh on 401 only when we had an access token
   if (res.status === 401) {
     const refreshToken = tokenStorage.getRefreshToken();
-    if (refreshToken) {
+    if (hadAccessToken && refreshToken) {
       const refreshRes = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,9 +67,26 @@ async function request<T>(method: string, endpoint: string, body?: unknown): Pro
         return retryRes.json() as Promise<T>;
       }
     }
-    tokenStorage.clearTokens();
-    window.location.replace('/#/login');
-    throw new ApiError(401, 'Session expired. Please log in again.');
+
+    // If we had an access token, treat as session expiration (clear + redirect)
+    if (hadAccessToken) {
+      tokenStorage.clearTokens();
+      window.location.replace('/#/login');
+      throw new ApiError(401, 'Session expired. Please log in again.');
+    }
+
+    // No access token -> this was likely an auth attempt (login/register). Preserve backend message.
+    let message = `${method} ${url} — ${res.statusText}`;
+    try {
+      const errorBody = await res.json();
+      if (typeof errorBody?.detail === 'string') message = errorBody.detail;
+      else if (Array.isArray(errorBody?.detail)) {
+        message = errorBody.detail.map((d: { msg: string }) => d.msg).join(', ');
+      }
+    } catch {
+      // ignore parse error
+    }
+    throw new ApiError(res.status, message);
   }
 
   if (!res.ok) {

@@ -3,6 +3,7 @@ import type { SubmitEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants';
 import { authService } from '../services/authService';
+import { ApiError } from '@/shared/services/apiClient';
 
 export function useRegister() {
   const navigate = useNavigate();
@@ -35,9 +36,12 @@ export function useRegister() {
       setSuccess(true);
       setTimeout(() => navigate(ROUTES.LOGIN), 1500);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Registration failed. Please try again.';
-      setError(message);
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        const message = err instanceof Error ? err.message : 'Registration failed. Please try again.';
+        setError(message);
+      }
     } finally {
       setIsLoading(false);
     }
